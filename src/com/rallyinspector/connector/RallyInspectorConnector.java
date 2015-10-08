@@ -1,8 +1,6 @@
 package com.rallyinspector.connector;
 
 import org.apache.log4j.Logger;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -32,7 +30,7 @@ public class RallyInspectorConnector {
 		
 	}*/
 
-	public void postData(JSONObject finalJsonObject, String webresourceType, String invocationUrl) {
+	public JSONObject postData(JSONObject finalJsonObject, String webresourceType, String invocationUrl) {
 		
 		@SuppressWarnings("resource")
 		ApplicationContext context = new AnnotationConfigApplicationContext(RallyInspectorApplicationConfiguration.class);
@@ -44,20 +42,8 @@ public class RallyInspectorConnector {
 			throw new RuntimeException("HTTP Error: " + response.getStatus());
 		}
 		JSONObject resultJsonObject = response.getEntity(JSONObject.class);
-		try {
-			JSONArray resultJsonArray = resultJsonObject.getJSONArray("response");
-			//System.out.println("Response from the Server: ");
-			logger.info("Output from the service is:");
-			for (int i = 0; i < resultJsonArray.length(); i++) {
-				JSONObject userStory = resultJsonArray.getJSONObject(i);
-				//System.out.println("jsonObject " + i + ": " + userStory.getString("FormattedID") + ": " + userStory.getString("Name"));
-				logger.info("jsonObject " + i + ": " + userStory.getString("FormattedID") + ": " + userStory.getString("Name"));
-			}
-		} catch (JSONException e) {
-			//e.printStackTrace();
-			logger.error("Problem in Connector",e);
-		}
 		
+		return resultJsonObject;
 	}
 
 	/*int responseCode = response.getStatus();

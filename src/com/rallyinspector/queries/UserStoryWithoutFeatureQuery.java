@@ -11,96 +11,121 @@ import com.rallyinspector.connector.RallyInspectorConnector;
 import com.rallyinspector.util.RallyInspectorApplicationConfiguration;
 import com.rallyinspector.util.RallyInspectorPropertiesReaderBean;
 
-
 public class UserStoryWithoutFeatureQuery {
 
-	// These will be read from application.properties file.
-	//public static final String WEBRESOURCE_TYPE_JSON = "application/json";
-	//public static final String SERVER_URI = "http://jarvissaibal:8080/ConnectorFramework/service";
-	//public static final String CHECK_QUERY_FILTER = "/rallyrestws/checkQueryFilter";
-	//public static final String QUERY_RALLY = "/rallyrestws/queryrally";
-	
 	final static Logger logger = Logger.getLogger(UserStoryWithoutFeatureQuery.class);
 
-	// Json Objects used
-	JSONObject finalJsonObject = new JSONObject();// Object used to invoke
-													// queryrally service.
-	JSONObject jsonObject = new JSONObject();// Object used to hold constructed
-												// queries.
-	JSONArray relation = new JSONArray();// Object used to hold list of query
-											// filters.
-	JSONObject queryFilterJsonObject = new JSONObject();// Object used to
-														// construct individual
-														// queries.
-
 	RallyInspectorConnector restClientConnector = new RallyInspectorConnector();
-	
-	
-	//System.out.println(rallyInspectorProperties.getServerUri());
+
+	// System.out.println(rallyInspectorProperties.getServerUri());
 	// method for invoking RallyInspectorConnector.java
 	public void createQueryForPost() {
-		
+
 		@SuppressWarnings("resource")
-		ApplicationContext context = new AnnotationConfigApplicationContext(RallyInspectorApplicationConfiguration.class);
-		RallyInspectorPropertiesReaderBean rallyInspectorProperties =  (RallyInspectorPropertiesReaderBean)context.getBean("rallyInspectorPropertiesReader");
-		
+		ApplicationContext context = new AnnotationConfigApplicationContext(
+				RallyInspectorApplicationConfiguration.class);
+		RallyInspectorPropertiesReaderBean rallyInspectorProperties = (RallyInspectorPropertiesReaderBean) context
+				.getBean("rallyInspectorPropertiesReader");
+
 		String invocationUrl = rallyInspectorProperties.getServerUri().concat(rallyInspectorProperties.getQueryRally());
 		String webResourceType = rallyInspectorProperties.getWebresourceType();
 		try {
-			// Creates the first filter and stores it in the array.
-			queryFilterJsonObject.put("field", "Feature");
-			queryFilterJsonObject.put("operator", "=");
-			queryFilterJsonObject.put("value", "null");
-			relation.put(queryFilterJsonObject);
-
-			// Creates the second filter and stores it in the array.
-			queryFilterJsonObject = new JSONObject();
-			queryFilterJsonObject.put("field", "ScheduleState");
-			queryFilterJsonObject.put("operator", "=");
-			queryFilterJsonObject.put("value", "In-Progress");
-			relation.put(queryFilterJsonObject);
-
-			// Creates the third filter and stores it in the array.
-			queryFilterJsonObject = new JSONObject();
-			queryFilterJsonObject.put("field", "CreationDate");
-			queryFilterJsonObject.put("operator", "=");
-			queryFilterJsonObject.put("value", "today-90");
-			relation.put(queryFilterJsonObject);
-
-			// Stores the final array in the object passed as "value" for
-			// queryReqFilter
-			jsonObject.put("queryFilters", relation);
-			jsonObject.put("relationType", true);
 
 			// Creates the object used to invoke queryrally service.
+			JSONObject finalJsonObject = new JSONObject();
 			finalJsonObject.put("queryReqType", "HierarchicalRequirement");
+			
 			finalJsonObject.put("queryReqFetch", "FormattedID,Name");
-			finalJsonObject.put("queryReqFilter", jsonObject);
+			
+			JSONObject finalQueryFilterObj = buildQueryFilterObject();
+			logger.debug("Query Filter Object is : " + finalQueryFilterObj);
+			
+			finalJsonObject.put("queryReqFilter", finalQueryFilterObj);
+			
 			finalJsonObject.put("queryReqWorkspaceRef",
 					"https://rally1.rallydev.com/slm/webservice/v2.0/workspace/1089940337");
 
+			logger.debug("Final JSON Object is : " + finalJsonObject);
+
+			JSONObject resultJsonObject = restClientConnector.postData(finalJsonObject, webResourceType, invocationUrl);
+
+			JSONArray resultJsonArray = resultJsonObject.getJSONArray("response");
+			logger.info("Output from the service is: ");
+			for (int i = 0; i < resultJsonArray.length(); i++) {
+				JSONObject userStory = resultJsonArray.getJSONObject(i);
+				logger.info("jsonObject " + i + ": " + userStory.getString("FormattedID") + ": "
+						+ userStory.getString("Name"));
+			}
+
 		} catch (JSONException e) {
-			//e.printStackTrace();
-			logger.error("Problem creating query",e);
-		}
-		try {
-			restClientConnector.postData(finalJsonObject, webResourceType, invocationUrl);
+			logger.error("Problem creating query", e);
 		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-			logger.error("Problem invoking connector",e);
+			logger.error("Problem invoking connector", e);
 		}
 	}
+
+	/**
+	 * Build up query filter object for User Story without Feature
+	 * 
+	 * @return
+	 * @throws JSONException
+	 */
+	private JSONObject buildQueryFilterObject() throws JSONException {
+		// Relation 1 - For Schedule Filter
+		JSONArray scheduleStateQueryFilterArray = new JSONArray();
+
+		JSONObject scheduleStateQueryFilterInProg = new JSONObject();
+		scheduleStateQueryFilterInProg = new JSONObject();
+		scheduleStateQueryFilterInProg.put("field", "ScheduleState");
+		scheduleStateQueryFilterInProg.put("operator", "=");
+		scheduleStateQueryFilterInProg.put("value", "In-Progress");
+		scheduleStateQueryFilterArray.put(scheduleStateQueryFilterInProg);
+
+		JSONObject scheduleStateQueryFilterComp = new JSONObject();
+		scheduleStateQueryFilterComp = new JSONObject();
+		scheduleStateQueryFilterComp.put("field", "ScheduleState");
+		scheduleStateQueryFilterComp.put("operator", "=");
+		scheduleStateQueryFilterComp.put("value", "Completed");
+		scheduleStateQueryFilterArray.put(scheduleStateQueryFilterComp);
+
+		JSONObject scheduleStateQueryFilterAcc = new JSONObject();
+		scheduleStateQueryFilterAcc = new JSONObject();
+		scheduleStateQueryFilterAcc.put("field", "ScheduleState");
+		scheduleStateQueryFilterAcc.put("operator", "=");
+		scheduleStateQueryFilterAcc.put("value", "Accepted");
+		scheduleStateQueryFilterArray.put(scheduleStateQueryFilterAcc);
+
+		JSONObject scheduleStateRelationObject = new JSONObject();
+		scheduleStateRelationObject.put("queryFilters", scheduleStateQueryFilterArray);
+		scheduleStateRelationObject.put("relationType", false);
+
+		// Relation 2 - For Feature and Date
+		JSONArray fetureDateQueryFilterArray = new JSONArray();
+
+		JSONObject fetureQueryFilter = new JSONObject();
+		fetureQueryFilter.put("field", "Feature");
+		fetureQueryFilter.put("operator", "=");
+		fetureQueryFilter.put("value", "null");
+		fetureDateQueryFilterArray.put(fetureQueryFilter);
+
+		JSONObject creationDateQueryFilter = new JSONObject();
+		creationDateQueryFilter.put("field", "CreationDate");
+		creationDateQueryFilter.put("operator", "=");
+		creationDateQueryFilter.put("value", "today-90");
+		fetureDateQueryFilterArray.put(creationDateQueryFilter);
+
+		JSONObject fetureDateRelationObject = new JSONObject();
+		fetureDateRelationObject.put("queryFilters", fetureDateQueryFilterArray);
+		fetureDateRelationObject.put("relationType", true);
+
+		// Final Query Filter build up
+		JSONArray finalRelationArray = new JSONArray();
+		finalRelationArray.put(scheduleStateRelationObject);
+		finalRelationArray.put(fetureDateRelationObject);
+
+		JSONObject finalQueryFilterObj = new JSONObject();
+		finalQueryFilterObj.put("relations", finalRelationArray);
+		finalQueryFilterObj.put("relationType", true);
+		return finalQueryFilterObj;
+	}
 }
-/*
- * Calendar calendar = Calendar.getInstance(); calendar.add(Calendar.MONTH,-3);
- * String dateValue = calendar.getTime().toString();
- */
-/*
- * public JSONObject createQueryFilter(){ try {
- * 
- * 
- * 
- * } catch (JSONException e) { // TODO Auto-generated catch block
- * e.printStackTrace(); } return queryFilterJsonObject; }
- */
