@@ -25,6 +25,7 @@ public class RallyInspectorApplicationConfiguration {
 		
 		rallyInspectorProperties.setCheckQueryFilter(env.getProperty("CHECK_QUERY_FILTER"));
 		rallyInspectorProperties.setQueryRally(env.getProperty("QUERY_RALLY"));
+		rallyInspectorProperties.setSaveListOfDiscrepancies(env.getProperty("SAVE_LIST_OF_DISCREPANCY_REPORTS"));
 		
 		return rallyInspectorProperties;
 	}

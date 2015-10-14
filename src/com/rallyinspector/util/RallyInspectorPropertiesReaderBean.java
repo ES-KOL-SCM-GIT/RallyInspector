@@ -7,6 +7,7 @@ public class RallyInspectorPropertiesReaderBean {
 	private String webresourceType;
 	private String checkQueryFilter;
 	private String queryRally;
+	private String saveListOfDiscrepancies;
 	
 	public String getServerUri() {
 		return serverUri;
@@ -37,6 +38,12 @@ public class RallyInspectorPropertiesReaderBean {
 	}
 	public void setQueryRally(String queryRally) {
 		this.queryRally = queryRally;
+	}
+	public String getSaveListOfDiscrepancies() {
+		return saveListOfDiscrepancies;
+	}
+	public void setSaveListOfDiscrepancies(String saveListOfDiscrepancies) {
+		this.saveListOfDiscrepancies = saveListOfDiscrepancies;
 	}
 }
 

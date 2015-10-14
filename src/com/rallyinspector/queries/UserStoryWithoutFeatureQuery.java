@@ -7,6 +7,7 @@ import org.codehaus.jettison.json.JSONObject;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import com.rallyinpsector.discrepancy.DiscrepancyReportPopulator;
 import com.rallyinspector.connector.RallyInspectorConnector;
 import com.rallyinspector.util.RallyInspectorApplicationConfiguration;
 import com.rallyinspector.util.RallyInspectorPropertiesReaderBean;
@@ -16,6 +17,7 @@ public class UserStoryWithoutFeatureQuery {
 	final static Logger logger = Logger.getLogger(UserStoryWithoutFeatureQuery.class);
 
 	RallyInspectorConnector restClientConnector = new RallyInspectorConnector();
+	DiscrepancyReportPopulator discrepancyReportPopulator = new DiscrepancyReportPopulator();
 
 	// System.out.println(rallyInspectorProperties.getServerUri());
 	// method for invoking RallyInspectorConnector.java
@@ -27,35 +29,38 @@ public class UserStoryWithoutFeatureQuery {
 		RallyInspectorPropertiesReaderBean rallyInspectorProperties = (RallyInspectorPropertiesReaderBean) context
 				.getBean("rallyInspectorPropertiesReader");
 
-		String invocationUrl = rallyInspectorProperties.getServerUri().concat(rallyInspectorProperties.getQueryRally());
+		String queryRallyInvocationUrl = rallyInspectorProperties.getServerUri().concat(rallyInspectorProperties.getQueryRally());
 		String webResourceType = rallyInspectorProperties.getWebresourceType();
+		String saveDiscrepancyListInvocationUrl = rallyInspectorProperties.getServerUri().concat(rallyInspectorProperties.getSaveListOfDiscrepancies());
 		try {
 
 			// Creates the object used to invoke queryrally service.
 			JSONObject finalJsonObject = new JSONObject();
-			finalJsonObject.put("queryReqType", "HierarchicalRequirement");
-			
-			finalJsonObject.put("queryReqFetch", "FormattedID,Name");
+			finalJsonObject.put("queryReqType", "HierarchicalRequirement");			
+			finalJsonObject.put("queryReqFetch", "FormattedID,Name,_ref,Project");
 			
 			JSONObject finalQueryFilterObj = buildQueryFilterObject();
-			logger.debug("Query Filter Object is : " + finalQueryFilterObj);
+			//logger.debug("Query Filter Object is : " + finalQueryFilterObj);
 			
-			finalJsonObject.put("queryReqFilter", finalQueryFilterObj);
-			
+			finalJsonObject.put("queryReqFilter", finalQueryFilterObj);			
 			finalJsonObject.put("queryReqWorkspaceRef",
 					"https://rally1.rallydev.com/slm/webservice/v2.0/workspace/1089940337");
 
-			logger.debug("Final JSON Object is : " + finalJsonObject);
+			//logger.debug("Final JSON Object is : " + finalJsonObject);
 
-			JSONObject resultJsonObject = restClientConnector.postData(finalJsonObject, webResourceType, invocationUrl);
-
+			JSONObject resultJsonObject = restClientConnector.postData(finalJsonObject, webResourceType, queryRallyInvocationUrl);
 			JSONArray resultJsonArray = resultJsonObject.getJSONArray("response");
-			logger.info("Output from the service is: ");
+			
+			JSONArray discrepancyReportArray = discrepancyReportPopulator.createDiscrepancyTablePopulatorObject(resultJsonArray);
+			String result = restClientConnector.postData(discrepancyReportArray, webResourceType, saveDiscrepancyListInvocationUrl);
+			logger.info("Output from the service is: " + result);
+			/*logger.info("Output from the service is: ");
 			for (int i = 0; i < resultJsonArray.length(); i++) {
 				JSONObject userStory = resultJsonArray.getJSONObject(i);
-				logger.info("jsonObject " + i + ": " + userStory.getString("FormattedID") + ": "
-						+ userStory.getString("Name"));
-			}
+				//logger.info(userStory.get("Project"));
+				//logger.info("jsonObject " + i + ": " + userStory.getString("FormattedID") + ": "
+						//+ userStory.getString("Name") );
+			}*/
 
 		} catch (JSONException e) {
 			logger.error("Problem creating query", e);
