@@ -18,22 +18,15 @@ public class RallyInspectorConnector {
 
 	private final Client client = Client.create();
 
-	// RallyInspectorPropertiesReaderBean rallyInspectorPropertiesReader = new
-	// RallyInspectorPropertiesReaderBean();
-
-	/*
-	 * Method used to invoke queryrally service. Takes JSONObject, Url and web
-	 * resource type created in UserStoryWithoutFeatureQuery.java as parameters.
-	 * rallyInspectorPropertiesReader.getHttpStatus())
+	
+	/**
+	 * @param input(JSONObject)
+	 * @param webresourceType(String)
+	 * @param invocationUrl(String)
+	 * @return result (JSONObject)
+	 * Overloaded method. Invokes rest service (POST) end points which accept above parameter types.
 	 */
-	/*
-	 * public void postData(JSONObject finalJsonObject, String webResourceType,
-	 * String Url) throws NumberFormatException, IOException {
-	 * 
-	 * }
-	 */
-
-	public JSONObject postData(JSONObject finalJsonObject, String webresourceType, String invocationUrl) {
+	public JSONObject postData(JSONObject input, String webresourceType, String invocationUrl) {
 
 		@SuppressWarnings("resource")
 		ApplicationContext context = new AnnotationConfigApplicationContext(
@@ -42,7 +35,7 @@ public class RallyInspectorConnector {
 				.getBean("rallyInspectorPropertiesReader");
 
 		WebResource webResource = client.resource(invocationUrl);
-		ClientResponse response = webResource.type(webresourceType).post(ClientResponse.class, finalJsonObject);
+		ClientResponse response = webResource.type(webresourceType).post(ClientResponse.class, input);
 		if (response.getStatus() != Integer.parseInt(rallyInspectorProperties.getResponseOk())) {
 			throw new RuntimeException("HTTP Error: " + response.getStatus());
 		}
@@ -51,7 +44,15 @@ public class RallyInspectorConnector {
 		return result;
 	}
 
-	public String postData(JSONArray finalJsonArray, String webresourceType, String invocationUrl) {
+	
+	/**
+	 * @param inputs (JSONArray)
+	 * @param webresourceType(String)
+	 * @param invocationUrl (String)
+	 * @return result (String)
+	 * Overloaded method. Invokes rest service (POST) end points which accept above parameter types.
+	 */
+	public String postData(JSONArray inputs, String webresourceType, String invocationUrl) {
 
 		@SuppressWarnings("resource")
 		ApplicationContext context = new AnnotationConfigApplicationContext(
@@ -60,7 +61,7 @@ public class RallyInspectorConnector {
 				.getBean("rallyInspectorPropertiesReader");
 
 		WebResource webResource = client.resource(invocationUrl);
-		ClientResponse response = webResource.type(webresourceType).post(ClientResponse.class, finalJsonArray);
+		ClientResponse response = webResource.type(webresourceType).post(ClientResponse.class, inputs);
 		if (response.getStatus() != Integer.parseInt(rallyInspectorProperties.getResponseOk())) {
 			throw new RuntimeException("HTTP Error: " + response.getStatus());
 		}
@@ -68,12 +69,5 @@ public class RallyInspectorConnector {
 
 		return result;
 	}
-
-	/*
-	 * int responseCode = response.getStatus();
-	 * System.out.println(responseCode); int test=
-	 * Integer.parseInt(env.getProperty("HTTP_STATUS_OK"));
-	 * System.out.println(test);
-	 */
 	// Add similar methods to fire get and delete operations
 }

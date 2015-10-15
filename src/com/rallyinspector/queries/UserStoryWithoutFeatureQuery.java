@@ -8,7 +8,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import com.rallyinspector.connector.RallyInspectorConnector;
-import com.rallyinspector.discrepancy.DiscrepancyReportPopulator;
+import com.rallyinspector.discrepancy.StoryWithoutFeatureDiscrepancyReportPopulator;
 import com.rallyinspector.util.RallyInspectorApplicationConfiguration;
 import com.rallyinspector.util.RallyInspectorPropertiesReaderBean;
 
@@ -16,37 +16,39 @@ public class UserStoryWithoutFeatureQuery {
 
 	final static Logger logger = Logger.getLogger(UserStoryWithoutFeatureQuery.class);
 
-	RallyInspectorConnector restClientConnector = new RallyInspectorConnector();
-	DiscrepancyReportPopulator discrepancyReportPopulator = new DiscrepancyReportPopulator();
+	RallyInspectorConnector rallyInspectorConnector = new RallyInspectorConnector();
+	StoryWithoutFeatureDiscrepancyReportPopulator discrepancyReportPopulator = new StoryWithoutFeatureDiscrepancyReportPopulator();
+	
+	ApplicationContext context = new AnnotationConfigApplicationContext(
+			RallyInspectorApplicationConfiguration.class);
+	RallyInspectorPropertiesReaderBean rallyInspectorProperties = (RallyInspectorPropertiesReaderBean) context
+			.getBean("rallyInspectorPropertiesReader");
+	
+	String webResourceType = rallyInspectorProperties.getWebresourceType();
 
-	public void createQueryForPost() {
-		@SuppressWarnings("resource")
-		ApplicationContext context = new AnnotationConfigApplicationContext(
-				RallyInspectorApplicationConfiguration.class);
-		RallyInspectorPropertiesReaderBean rallyInspectorProperties = (RallyInspectorPropertiesReaderBean) context
-				.getBean("rallyInspectorPropertiesReader");
-
-		String queryRallyInvocationUrl = rallyInspectorProperties.getServerUri().concat(rallyInspectorProperties.getQueryRally());
-		String webResourceType = rallyInspectorProperties.getWebresourceType();
-		String saveDiscrepancyListInvocationUrl = rallyInspectorProperties.getServerUri().concat(rallyInspectorProperties.getSaveListOfDiscrepancies());
+	/**
+	 * Builds the final query filter used to invoke Query Rally REST service. Invokes said REST service. 
+	 */
+	public void createStoryWithoutFeatureQuery() {
+		
+		String queryRallyInvocationUrl = rallyInspectorProperties.getServerUri().concat(rallyInspectorProperties.getQueryRally());		
 		try {
 
 			// Creates the object used to invoke queryrally service.
-			JSONObject finalJsonObject = new JSONObject();
-			finalJsonObject.put("queryReqType", "HierarchicalRequirement");			
-			finalJsonObject.put("queryReqFetch", "FormattedID,Name,_ref,Project");
+			JSONObject finalJson = new JSONObject();
+			finalJson.put("queryReqType", "HierarchicalRequirement");			
+			finalJson.put("queryReqFetch", "FormattedID,Name,_ref,Project");
 			
-			JSONObject finalQueryFilterObj = buildQueryFilterObject();
+			JSONObject finalQueryRequestFilter = buildQueryFilter();
 			
-			finalJsonObject.put("queryReqFilter", finalQueryFilterObj);			
-			finalJsonObject.put("queryReqWorkspaceRef",
+			finalJson.put("queryReqFilter", finalQueryRequestFilter);			
+			finalJson.put("queryReqWorkspaceRef",
 					"https://rally1.rallydev.com/slm/webservice/v2.0/workspace/1089940337");
 
-			JSONObject resultJsonObject = restClientConnector.postData(finalJsonObject, webResourceType, queryRallyInvocationUrl);
-			JSONArray resultJsonArray = resultJsonObject.getJSONArray("response");
+			JSONObject resultJson = rallyInspectorConnector.postData(finalJson, webResourceType, queryRallyInvocationUrl);
+			JSONArray results = resultJson.getJSONArray("response");
 			
-			JSONArray discrepancyReportArray = discrepancyReportPopulator.createDiscrepancyTablePopulatorObject(resultJsonArray);
-			String result = restClientConnector.postData(discrepancyReportArray, webResourceType, saveDiscrepancyListInvocationUrl);
+			String result = insertDiscrepanciesIntoDB(results);			
 			logger.info("Output from the service is: " + result);
 
 		} catch (JSONException e) {
@@ -55,6 +57,21 @@ public class UserStoryWithoutFeatureQuery {
 			logger.error("Problem invoking connector", e);
 		}
 	}
+	
+	/**
+	 * @param inputs - response object (JSONArray) containing list of all user stories without feature.
+	 * @return
+	 * 
+	 * Invokes Save Discrepancy List REST service to insert records into discrepancy database.
+	 */
+	public String insertDiscrepanciesIntoDB(JSONArray inputs){
+		
+		String saveDiscrepancyListInvocationUrl = rallyInspectorProperties.getServerUri().concat(rallyInspectorProperties.getSaveListOfDiscrepancies());
+		
+		JSONArray discrepancyReports = discrepancyReportPopulator.createDiscrepancyTablePopulator(inputs);
+		String result = rallyInspectorConnector.postData(discrepancyReports, webResourceType, saveDiscrepancyListInvocationUrl);
+		return result;
+	}
 
 	/**
 	 * Build up query filter object for User Story without Feature
@@ -62,62 +79,62 @@ public class UserStoryWithoutFeatureQuery {
 	 * @return
 	 * @throws JSONException
 	 */
-	private JSONObject buildQueryFilterObject() throws JSONException {
+	private JSONObject buildQueryFilter() throws JSONException {
 		// Relation 1 - For Schedule Filter
-		JSONArray scheduleStateQueryFilterArray = new JSONArray();
+		JSONArray scheduleStateQueryFilters = new JSONArray();
 
 		JSONObject scheduleStateQueryFilterInProg = new JSONObject();
 		scheduleStateQueryFilterInProg = new JSONObject();
 		scheduleStateQueryFilterInProg.put("field", "ScheduleState");
 		scheduleStateQueryFilterInProg.put("operator", "=");
 		scheduleStateQueryFilterInProg.put("value", "In-Progress");
-		scheduleStateQueryFilterArray.put(scheduleStateQueryFilterInProg);
+		scheduleStateQueryFilters.put(scheduleStateQueryFilterInProg);
 
 		JSONObject scheduleStateQueryFilterComp = new JSONObject();
 		scheduleStateQueryFilterComp = new JSONObject();
 		scheduleStateQueryFilterComp.put("field", "ScheduleState");
 		scheduleStateQueryFilterComp.put("operator", "=");
 		scheduleStateQueryFilterComp.put("value", "Completed");
-		scheduleStateQueryFilterArray.put(scheduleStateQueryFilterComp);
+		scheduleStateQueryFilters.put(scheduleStateQueryFilterComp);
 
 		JSONObject scheduleStateQueryFilterAcc = new JSONObject();
 		scheduleStateQueryFilterAcc = new JSONObject();
 		scheduleStateQueryFilterAcc.put("field", "ScheduleState");
 		scheduleStateQueryFilterAcc.put("operator", "=");
 		scheduleStateQueryFilterAcc.put("value", "Accepted");
-		scheduleStateQueryFilterArray.put(scheduleStateQueryFilterAcc);
+		scheduleStateQueryFilters.put(scheduleStateQueryFilterAcc);
 
-		JSONObject scheduleStateRelationObject = new JSONObject();
-		scheduleStateRelationObject.put("queryFilters", scheduleStateQueryFilterArray);
-		scheduleStateRelationObject.put("relationType", false);
+		JSONObject scheduleStateRelation = new JSONObject();
+		scheduleStateRelation.put("queryFilters", scheduleStateQueryFilters);
+		scheduleStateRelation.put("relationType", false);
 
 		// Relation 2 - For Feature and Date
-		JSONArray fetureDateQueryFilterArray = new JSONArray();
+		JSONArray featureDateQueryFilters = new JSONArray();
 
-		JSONObject fetureQueryFilter = new JSONObject();
-		fetureQueryFilter.put("field", "Feature");
-		fetureQueryFilter.put("operator", "=");
-		fetureQueryFilter.put("value", "null");
-		fetureDateQueryFilterArray.put(fetureQueryFilter);
+		JSONObject featureQueryFilter = new JSONObject();
+		featureQueryFilter.put("field", "Feature");
+		featureQueryFilter.put("operator", "=");
+		featureQueryFilter.put("value", "null");
+		featureDateQueryFilters.put(featureQueryFilter);
 
 		JSONObject creationDateQueryFilter = new JSONObject();
 		creationDateQueryFilter.put("field", "CreationDate");
 		creationDateQueryFilter.put("operator", "=");
 		creationDateQueryFilter.put("value", "today-90");
-		fetureDateQueryFilterArray.put(creationDateQueryFilter);
+		featureDateQueryFilters.put(creationDateQueryFilter);
 
-		JSONObject fetureDateRelationObject = new JSONObject();
-		fetureDateRelationObject.put("queryFilters", fetureDateQueryFilterArray);
-		fetureDateRelationObject.put("relationType", true);
+		JSONObject featureDateRelation = new JSONObject();
+		featureDateRelation.put("queryFilters", featureDateQueryFilters);
+		featureDateRelation.put("relationType", true);
 
 		// Final Query Filter build up
-		JSONArray finalRelationArray = new JSONArray();
-		finalRelationArray.put(scheduleStateRelationObject);
-		finalRelationArray.put(fetureDateRelationObject);
+		JSONArray finalRelations = new JSONArray();
+		finalRelations.put(scheduleStateRelation);
+		finalRelations.put(featureDateRelation);
 
-		JSONObject finalQueryFilterObj = new JSONObject();
-		finalQueryFilterObj.put("relations", finalRelationArray);
-		finalQueryFilterObj.put("relationType", true);
-		return finalQueryFilterObj;
+		JSONObject finalQueryFilter = new JSONObject();
+		finalQueryFilter.put("relations", finalRelations);
+		finalQueryFilter.put("relationType", true);
+		return finalQueryFilter;
 	}
 }

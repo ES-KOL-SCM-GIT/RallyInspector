@@ -7,7 +7,7 @@ public class RestClientTester {
 	static UserStoryWithoutFeatureQuery userStoryWithoutFeature = new UserStoryWithoutFeatureQuery();
 
 	public static void main(String[] args) {
-		userStoryWithoutFeature.createQueryForPost();
+		userStoryWithoutFeature.createStoryWithoutFeatureQuery();
 	}
 
 }

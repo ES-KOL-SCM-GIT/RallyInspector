@@ -5,20 +5,27 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-public class DiscrepancyReportPopulator {
+public class StoryWithoutFeatureDiscrepancyReportPopulator {
 	
-	final static Logger logger = Logger.getLogger(DiscrepancyReportPopulator.class);
+	final static Logger logger = Logger.getLogger(StoryWithoutFeatureDiscrepancyReportPopulator.class);
 
-	public JSONArray createDiscrepancyTablePopulatorObject(JSONArray resultJsonArray) {	
+	/**
+	 * @param inputs - a list of stories without features retrieved by hitting Query Rally REST service end point.
+	 * @return discrepancyReports - a list of JSONObjects, each of which holds information for one user story without feature.
+	 * 
+	 * Populates a list of stories without feature to insert into discrepancy database.
+	 */
+	public JSONArray createDiscrepancyTablePopulator(JSONArray inputs) {	
 		
-		JSONArray discrepancyReports = new JSONArray();		
+		JSONArray discrepancyReports = new JSONArray();
+		int inputsCount = inputs.length();
 		try {
 			JSONObject discrepancyType = new JSONObject();
 			discrepancyType.put("id", 1);
 			
-			for (int i = 0; i < resultJsonArray.length(); i++) {
+			for (int i = 0; i < inputsCount; i++) {
 
-				JSONObject userStory = resultJsonArray.getJSONObject(i);
+				JSONObject userStory = inputs.getJSONObject(i);
 
 				JSONObject discrepancyReport = new JSONObject();
 				discrepancyReport.put("formattedID", userStory.getString("FormattedID"));
