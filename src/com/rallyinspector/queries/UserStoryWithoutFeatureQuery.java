@@ -7,8 +7,8 @@ import org.codehaus.jettison.json.JSONObject;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import com.rallyinpsector.discrepancy.DiscrepancyReportPopulator;
 import com.rallyinspector.connector.RallyInspectorConnector;
+import com.rallyinspector.discrepancy.DiscrepancyReportPopulator;
 import com.rallyinspector.util.RallyInspectorApplicationConfiguration;
 import com.rallyinspector.util.RallyInspectorPropertiesReaderBean;
 
@@ -19,10 +19,7 @@ public class UserStoryWithoutFeatureQuery {
 	RallyInspectorConnector restClientConnector = new RallyInspectorConnector();
 	DiscrepancyReportPopulator discrepancyReportPopulator = new DiscrepancyReportPopulator();
 
-	// System.out.println(rallyInspectorProperties.getServerUri());
-	// method for invoking RallyInspectorConnector.java
 	public void createQueryForPost() {
-
 		@SuppressWarnings("resource")
 		ApplicationContext context = new AnnotationConfigApplicationContext(
 				RallyInspectorApplicationConfiguration.class);
@@ -40,13 +37,10 @@ public class UserStoryWithoutFeatureQuery {
 			finalJsonObject.put("queryReqFetch", "FormattedID,Name,_ref,Project");
 			
 			JSONObject finalQueryFilterObj = buildQueryFilterObject();
-			//logger.debug("Query Filter Object is : " + finalQueryFilterObj);
 			
 			finalJsonObject.put("queryReqFilter", finalQueryFilterObj);			
 			finalJsonObject.put("queryReqWorkspaceRef",
 					"https://rally1.rallydev.com/slm/webservice/v2.0/workspace/1089940337");
-
-			//logger.debug("Final JSON Object is : " + finalJsonObject);
 
 			JSONObject resultJsonObject = restClientConnector.postData(finalJsonObject, webResourceType, queryRallyInvocationUrl);
 			JSONArray resultJsonArray = resultJsonObject.getJSONArray("response");
@@ -54,13 +48,6 @@ public class UserStoryWithoutFeatureQuery {
 			JSONArray discrepancyReportArray = discrepancyReportPopulator.createDiscrepancyTablePopulatorObject(resultJsonArray);
 			String result = restClientConnector.postData(discrepancyReportArray, webResourceType, saveDiscrepancyListInvocationUrl);
 			logger.info("Output from the service is: " + result);
-			/*logger.info("Output from the service is: ");
-			for (int i = 0; i < resultJsonArray.length(); i++) {
-				JSONObject userStory = resultJsonArray.getJSONObject(i);
-				//logger.info(userStory.get("Project"));
-				//logger.info("jsonObject " + i + ": " + userStory.getString("FormattedID") + ": "
-						//+ userStory.getString("Name") );
-			}*/
 
 		} catch (JSONException e) {
 			logger.error("Problem creating query", e);
