@@ -47,7 +47,7 @@ public class UserStoryWithoutFeatureDiscrepancyHandler {
 	 * @param rallyInspectorProperties
 	 * @return
 	 */
-	public JSONArray invokeStoryWithoutFeatureQuery(RallyInspectorConnector rallyInspectorConnector,
+	private JSONArray invokeStoryWithoutFeatureQuery(RallyInspectorConnector rallyInspectorConnector,
 			ApplicationContext context, RallyInspectorPropertiesReaderBean rallyInspectorProperties) {
 
 		String queryRallyInvocationUrl = rallyInspectorProperties.getServerUri()
@@ -155,7 +155,7 @@ public class UserStoryWithoutFeatureDiscrepancyHandler {
 	 * @param rallyInspectorProperties
 	 * @return
 	 */
-	public String insertDiscrepanciesIntoDB(JSONArray listOfStoriesWithDiscrepancy,
+	private String insertDiscrepanciesIntoDB(JSONArray listOfStoriesWithDiscrepancy,
 			RallyInspectorConnector rallyInspectorConnector, ApplicationContext context,
 			RallyInspectorPropertiesReaderBean rallyInspectorProperties) {
 
@@ -181,7 +181,7 @@ public class UserStoryWithoutFeatureDiscrepancyHandler {
 	 * @param listOfStoriesWithDiscrepancy
 	 * @return
 	 */
-	public JSONArray createDiscrepancyTablePopulator(JSONArray listOfStoriesWithDiscrepancy) {
+	private JSONArray createDiscrepancyTablePopulator(JSONArray listOfStoriesWithDiscrepancy) {
 
 		JSONArray discrepancyReports = new JSONArray();
 		int listOfStoriesWithDiscrepancyCount = listOfStoriesWithDiscrepancy.length();
