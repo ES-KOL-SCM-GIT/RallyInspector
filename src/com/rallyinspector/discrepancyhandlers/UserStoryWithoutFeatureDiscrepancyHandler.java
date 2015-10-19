@@ -15,42 +15,61 @@ public class UserStoryWithoutFeatureDiscrepancyHandler {
 
 	final static Logger logger = Logger.getLogger(UserStoryWithoutFeatureDiscrepancyHandler.class);
 
-	
-	public void handleDiscrepancy() {		
+	/**
+	 * This method is the hook via which the scheduler will be able to access
+	 * the methods which actually handle the discrepancy. It performs several
+	 * generic activities,such as initializing an instance of the connector,and
+	 * initializing the properties file reader. All calls to business logic
+	 * methods are performed from inside this method.
+	 */
+	public void handleDiscrepancy() {
 		RallyInspectorConnector rallyInspectorConnector = new RallyInspectorConnector();
 		ApplicationContext context = new AnnotationConfigApplicationContext(
 				RallyInspectorApplicationConfiguration.class);
 		RallyInspectorPropertiesReaderBean rallyInspectorProperties = (RallyInspectorPropertiesReaderBean) context
 				.getBean("rallyInspectorPropertiesReader");
-		
-		JSONArray listOfStoriesWithDiscrepancy = invokeStoryWithoutFeatureQuery(rallyInspectorConnector,context,rallyInspectorProperties);
-		String responseAfterDbInsert = insertDiscrepanciesIntoDB(listOfStoriesWithDiscrepancy,rallyInspectorConnector,context,rallyInspectorProperties);
+
+		JSONArray listOfStoriesWithDiscrepancy = invokeStoryWithoutFeatureQuery(rallyInspectorConnector, context,
+				rallyInspectorProperties);
+		String responseAfterDbInsert = insertDiscrepanciesIntoDB(listOfStoriesWithDiscrepancy, rallyInspectorConnector,
+				context, rallyInspectorProperties);
 		logger.info("Output from the service is: " + responseAfterDbInsert);
 	}
-	
+
 	/**
-	 * Builds the final query filter used to invoke Query Rally REST service. Invokes said REST service. 
+	 * This method returns a JSONArray holding all the stories conforming to the
+	 * current discrepancy type. The ApplicationContext &
+	 * RallyInspectorPropertiesReaderBean parameters allow the method to create
+	 * the required invocation url inside.
+	 * 
+	 * @param rallyInspectorConnector
+	 * @param context
+	 * @param rallyInspectorProperties
+	 * @return
 	 */
-	public JSONArray invokeStoryWithoutFeatureQuery(RallyInspectorConnector rallyInspectorConnector, ApplicationContext context,RallyInspectorPropertiesReaderBean rallyInspectorProperties) {
-		
-		String queryRallyInvocationUrl = rallyInspectorProperties.getServerUri().concat(rallyInspectorProperties.getQueryRally());	
+	public JSONArray invokeStoryWithoutFeatureQuery(RallyInspectorConnector rallyInspectorConnector,
+			ApplicationContext context, RallyInspectorPropertiesReaderBean rallyInspectorProperties) {
+
+		String queryRallyInvocationUrl = rallyInspectorProperties.getServerUri()
+				.concat(rallyInspectorProperties.getQueryRally());
 		String webResourceType = rallyInspectorProperties.getWebresourceType();
 		JSONArray results = new JSONArray();
 		try {
 			// Creates the object used to invoke queryrally service.
 			JSONObject finalJson = new JSONObject();
-			finalJson.put("queryReqType", "HierarchicalRequirement");			
+			finalJson.put("queryReqType", "HierarchicalRequirement");
 			finalJson.put("queryReqFetch", "FormattedID,Name,_ref,Project");
-			
+
 			JSONObject finalQueryRequestFilter = buildQueryFilter();
-			
-			finalJson.put("queryReqFilter", finalQueryRequestFilter);			
+
+			finalJson.put("queryReqFilter", finalQueryRequestFilter);
 			finalJson.put("queryReqWorkspaceRef",
 					"https://rally1.rallydev.com/slm/webservice/v2.0/workspace/1089940337");
 
-			JSONObject resultJson = rallyInspectorConnector.postData(finalJson, webResourceType, queryRallyInvocationUrl);
+			JSONObject resultJson = rallyInspectorConnector.postData(finalJson, webResourceType,
+					queryRallyInvocationUrl);
 			results = resultJson.getJSONArray("response");
-			
+
 		} catch (JSONException e) {
 			logger.error("Problem creating query", e);
 		} catch (NumberFormatException e) {
@@ -58,7 +77,7 @@ public class UserStoryWithoutFeatureDiscrepancyHandler {
 		}
 		return results;
 	}
-	
+
 	/**
 	 * Build up query filter object for User Story without Feature
 	 * 
@@ -123,37 +142,53 @@ public class UserStoryWithoutFeatureDiscrepancyHandler {
 		finalQueryFilter.put("relationType", true);
 		return finalQueryFilter;
 	}
-	
+
 	/**
-	 * @param inputs - response object (JSONArray) containing list of all user stories without feature.
-	 * @return
+	 * This method returns a response String from the Save Discrepancy List REST
+	 * service after stories conforming to the discrepancy have been persisted
+	 * to database. The JSONArray parameter holds the list of all stories
+	 * conforming to the discrepancy being handled.
 	 * 
-	 * Invokes Save Discrepancy List REST service to insert records into discrepancy database.
+	 * @param listOfStoriesWithDiscrepancy
+	 * @param rallyInspectorConnector
+	 * @param context
+	 * @param rallyInspectorProperties
+	 * @return
 	 */
-	public String insertDiscrepanciesIntoDB(JSONArray listOfStoriesWithDiscrepancy,RallyInspectorConnector rallyInspectorConnector, ApplicationContext context,RallyInspectorPropertiesReaderBean rallyInspectorProperties){
-		
-		String saveDiscrepancyListInvocationUrl = rallyInspectorProperties.getServerUri().concat(rallyInspectorProperties.getSaveListOfDiscrepancies());
+	public String insertDiscrepanciesIntoDB(JSONArray listOfStoriesWithDiscrepancy,
+			RallyInspectorConnector rallyInspectorConnector, ApplicationContext context,
+			RallyInspectorPropertiesReaderBean rallyInspectorProperties) {
+
+		String saveDiscrepancyListInvocationUrl = rallyInspectorProperties.getServerUri()
+				.concat(rallyInspectorProperties.getSaveListOfDiscrepancies());
 		String webResourceType = rallyInspectorProperties.getWebresourceType();
-		
+
 		JSONArray discrepancyReports = createDiscrepancyTablePopulator(listOfStoriesWithDiscrepancy);
-		String result = rallyInspectorConnector.postData(discrepancyReports, webResourceType, saveDiscrepancyListInvocationUrl);
+		String result = rallyInspectorConnector.postData(discrepancyReports, webResourceType,
+				saveDiscrepancyListInvocationUrl);
 		return result;
 	}
 
 	/**
-	 * @param inputs - a list of stories without features retrieved by hitting Query Rally REST service end point.
-	 * @return discrepancyReports - a list of JSONObjects, each of which holds information for one user story without feature.
+	 * This method returns a list of Discrepancy Report objects to be persisted
+	 * to database. The Discrepancy Report table has a Foreign key relationship
+	 * with the Discrepancy Type table,in the form of Discrepancy Type ID.
+	 * Therefore, while creating the Report object, it is required to pass in
+	 * the Discrepancy Type object with only the specific Type id populated. The
+	 * REST service automatically looks up the Discrepancy Type ID while
+	 * inserting records into the Reports table.
 	 * 
-	 * Populates a list of stories without feature to insert into discrepancy database.
+	 * @param listOfStoriesWithDiscrepancy
+	 * @return
 	 */
-	public JSONArray createDiscrepancyTablePopulator(JSONArray listOfStoriesWithDiscrepancy) {	
-		
+	public JSONArray createDiscrepancyTablePopulator(JSONArray listOfStoriesWithDiscrepancy) {
+
 		JSONArray discrepancyReports = new JSONArray();
 		int listOfStoriesWithDiscrepancyCount = listOfStoriesWithDiscrepancy.length();
 		try {
 			JSONObject discrepancyType = new JSONObject();
 			discrepancyType.put("id", 1);
-			
+
 			for (int i = 0; i < listOfStoriesWithDiscrepancyCount; i++) {
 
 				JSONObject userStory = listOfStoriesWithDiscrepancy.getJSONObject(i);
@@ -164,7 +199,7 @@ public class UserStoryWithoutFeatureDiscrepancyHandler {
 				discrepancyReport.put("artifactRef", userStory.getString("_ref"));
 				discrepancyReport.put("discType", discrepancyType);
 				discrepancyReport.put("teamName", userStory.getJSONObject("Project").getString("_refObjectName"));
-				
+
 				discrepancyReports.put(discrepancyReport);
 			}
 
@@ -174,5 +209,4 @@ public class UserStoryWithoutFeatureDiscrepancyHandler {
 		return discrepancyReports;
 	}
 
-	
 }

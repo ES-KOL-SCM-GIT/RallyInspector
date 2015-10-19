@@ -20,7 +20,7 @@ public class RallyInspectorConnector {
 
 	
 	/**
-	 * Overloaded method. Returns a JSONObject.
+	 * Overloaded method. Returns a JSONObject holding the result of the invocation of the REST service.
 	 * @param input(JSONObject)
 	 * @param webresourceType(String)
 	 * @param invocationUrl(String)
@@ -47,11 +47,12 @@ public class RallyInspectorConnector {
 
 	
 	/**
+	 * Overloaded method. Returns a String holding the result of the invocation of the REST service.
+	 * 
 	 * @param inputs (JSONArray)
 	 * @param webresourceType(String)
 	 * @param invocationUrl (String)
 	 * @return result (String)
-	 * Overloaded method. Invokes rest service (POST) end points which accept above parameter types.
 	 */
 	public String postData(JSONArray inputs, String webresourceType, String invocationUrl) {
 
