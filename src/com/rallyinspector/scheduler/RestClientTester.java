@@ -1,13 +1,13 @@
 package com.rallyinspector.scheduler;
 
-import com.rallyinspector.queries.UserStoryWithoutFeatureQuery;
+import com.rallyinspector.discrepancyhandlers.UserStoryWithoutFeatureDiscrepancyHandler;
 
 public class RestClientTester {
 	
-	static UserStoryWithoutFeatureQuery userStoryWithoutFeature = new UserStoryWithoutFeatureQuery();
+	static UserStoryWithoutFeatureDiscrepancyHandler userStoryWithoutFeature = new UserStoryWithoutFeatureDiscrepancyHandler();
 
 	public static void main(String[] args) {
-		userStoryWithoutFeature.createStoryWithoutFeatureQuery();
+		userStoryWithoutFeature.handleDiscrepancy();
 	}
 
 }
