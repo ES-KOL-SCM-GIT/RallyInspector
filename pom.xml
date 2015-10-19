@@ -127,25 +127,6 @@
 			<version>1</version>
 		</dependency>
 
-		<!-- Servlet -->
-		<!-- <dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
-			<version>2.5</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax.servlet.jsp</groupId>
-			<artifactId>jsp-api</artifactId>
-			<version>2.1</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>jstl</artifactId>
-			<version>1.2</version>
-		</dependency> -->
-
 		<!-- Test -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -153,20 +134,8 @@
 			<version>4.7</version>
 			<scope>test</scope>
 		</dependency>
-
-		<!-- <dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<version>1.16.2</version>
-			<scope>provided</scope>
-		</dependency> -->
 		
-		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
-			<version>2.3.1</version>
-		</dependency> 
-		
+		<!-- JSON Element Handling -->
 		<dependency>
 			<groupId>org.jsondoc</groupId>
 			<artifactId>jsondoc-core</artifactId>
@@ -184,12 +153,15 @@
 			<artifactId>jsondoc-ui</artifactId>
 			<version>1.1.15</version>
 		</dependency>
-
+	
+		<!-- HTTP Client -->
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
 			<version>4.3.6</version>
 		</dependency>
+		
+		<!-- Jersey Handlers -->
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-server</artifactId>
