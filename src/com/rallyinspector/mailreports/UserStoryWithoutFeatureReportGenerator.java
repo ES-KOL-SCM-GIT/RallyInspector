@@ -104,11 +104,11 @@ public class UserStoryWithoutFeatureReportGenerator {
 
 	private MultivaluedMap<String, String> buildQueryParams() {
 		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-		/*
-		 * DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy"); Date date
-		 * = new Date();
-		 */
-		queryParams.add("date", "10/30/2015");
+
+		DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+		Date date = new Date();
+
+		queryParams.add("date", dateFormat.format(date));
 		return queryParams;
 	}
 
