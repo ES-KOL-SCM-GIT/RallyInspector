@@ -8,6 +8,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import com.rallyinspector.connector.RallyInspectorConnector;
+import com.rallyinspector.mailreports.UserStoryWithoutFeatureReportGenerator;
 import com.rallyinspector.util.RallyInspectorApplicationConfiguration;
 import com.rallyinspector.util.RallyInspectorPropertiesReaderBean;
 
@@ -24,6 +25,8 @@ public class UserStoryWithoutFeatureDiscrepancyHandler {
 	 */
 	public void handleDiscrepancy() {
 		RallyInspectorConnector rallyInspectorConnector = new RallyInspectorConnector();
+		UserStoryWithoutFeatureReportGenerator reportGenerator = new UserStoryWithoutFeatureReportGenerator();
+		
 		ApplicationContext context = new AnnotationConfigApplicationContext(
 				RallyInspectorApplicationConfiguration.class);
 		RallyInspectorPropertiesReaderBean rallyInspectorProperties = (RallyInspectorPropertiesReaderBean) context
@@ -34,6 +37,8 @@ public class UserStoryWithoutFeatureDiscrepancyHandler {
 		String responseAfterDbInsert = insertDiscrepanciesIntoDB(listOfStoriesWithDiscrepancy, rallyInspectorConnector,
 				context, rallyInspectorProperties);
 		logger.info("Output from the service is: " + responseAfterDbInsert);
+		
+		reportGenerator.handleReportCreation();
 	}
 
 	/**

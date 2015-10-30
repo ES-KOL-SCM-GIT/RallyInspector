@@ -1,5 +1,7 @@
 package com.rallyinspector.connector;
 
+import javax.ws.rs.core.MultivaluedMap;
+
 import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
@@ -69,6 +71,25 @@ public class RallyInspectorConnector {
 		}
 		String result = response.getEntity(String.class);
 
+		return result;
+	}
+	
+	public JSONArray getData(MultivaluedMap<String,String> inputParams, String invocationUrl ){
+		
+		@SuppressWarnings("resource")
+		ApplicationContext context = new AnnotationConfigApplicationContext(
+				RallyInspectorApplicationConfiguration.class);
+		RallyInspectorPropertiesReaderBean rallyInspectorProperties = (RallyInspectorPropertiesReaderBean) context
+				.getBean("rallyInspectorPropertiesReader");
+
+		WebResource webResource = client.resource(invocationUrl).queryParams(inputParams);
+		ClientResponse response = webResource.get(ClientResponse.class);		
+		if (response.getStatus() != Integer.parseInt(rallyInspectorProperties.getResponseOk())) {
+			throw new RuntimeException("HTTP Error: " + response.getStatus());
+		}
+		
+		JSONArray result = response.getEntity(JSONArray.class);
+		
 		return result;
 	}
 	// Add similar methods to fire get and delete operations

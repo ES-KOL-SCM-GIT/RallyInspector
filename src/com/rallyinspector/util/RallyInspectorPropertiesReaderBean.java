@@ -8,6 +8,7 @@ public class RallyInspectorPropertiesReaderBean {
 	private String checkQueryFilter;
 	private String queryRally;
 	private String saveListOfDiscrepancies;
+	private String getDiscrepancyReportsByDate;
 	
 	public String getServerUri() {
 		return serverUri;
@@ -44,6 +45,12 @@ public class RallyInspectorPropertiesReaderBean {
 	}
 	public void setSaveListOfDiscrepancies(String saveListOfDiscrepancies) {
 		this.saveListOfDiscrepancies = saveListOfDiscrepancies;
+	}
+	public String getGetDiscrepancyReportsByDate() {
+		return getDiscrepancyReportsByDate;
+	}
+	public void setGetDiscrepancyReportsByDate(String getDiscrepancyReportsByDate) {
+		this.getDiscrepancyReportsByDate = getDiscrepancyReportsByDate;
 	}
 }
 
