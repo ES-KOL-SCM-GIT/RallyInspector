@@ -11,13 +11,10 @@ import java.util.Properties;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
-import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.log4j.Logger;
@@ -45,7 +42,17 @@ public class UserStoryWithoutFeatureReportGenerator {
 		MultivaluedMap<String, String> finalQueryParams = buildQueryParams();
 		JSONArray listOfStoriesWithDiscrepancy = getPersistedStoriesWithoutFeature(rallyInspectorConnector, context,
 				rallyInspectorProperties, finalQueryParams);
+				
+		Map<String, List<String>> discrepanciesByTeam = groupDiscrepanciesByTeam(listOfStoriesWithDiscrepancy);
 
+		for (Map.Entry<String, List<String>> entry : discrepanciesByTeam.entrySet()) {
+			/*For more than one discrepancy,call method to group discrepancies by type from here*/
+			composeAndSendMail(entry.getKey(), entry.getValue());
+		}
+
+	}
+	
+	private Map<String, List<String>> groupDiscrepanciesByTeam(JSONArray listOfStoriesWithDiscrepancy){
 		int listOfStoriesWithDiscrepancyCount = listOfStoriesWithDiscrepancy.length();
 		Map<String, List<String>> discrepanciesByTeamMap = new HashMap<String, List<String>>();
 		for (int i = 0; i < listOfStoriesWithDiscrepancyCount; i++) {
@@ -60,11 +67,7 @@ public class UserStoryWithoutFeatureReportGenerator {
 				e.printStackTrace();
 			}
 		}
-
-		for (Map.Entry<String, List<String>> entry : discrepanciesByTeamMap.entrySet()) {
-			composeAndSendMail(entry.getKey(), entry.getValue());
-		}
-
+		return discrepanciesByTeamMap;
 	}
 
 	private void composeAndSendMail(String team, List<String> artifactNames) {
@@ -78,25 +81,32 @@ public class UserStoryWithoutFeatureReportGenerator {
 			message.setFrom(new InternetAddress("sayan.guha@lexmark.com"));
 			message.addRecipient(Message.RecipientType.TO, new InternetAddress("sayan.guha@lexmark.com"));
 			message.setSubject("Discrepancy Report For Team: " + team);
+			
+			StringBuilder sb = new StringBuilder();
+			sb.append("<table>");
+			for (String s : artifactNames) {
+				sb.append("<tr><td>"); // <tr> creates a new row & <td> creates a new column on the same row.
+				sb.append(s);
+				sb.append("</td></tr>");
+				sb.append("\n");
+			}
+			sb.append("</table>");
+			
+			message.setContent(sb.toString(), "text/html");
+			Transport.send(message);
 
 			/*
 			 * Multipart mp = new MimeMultipart(); MimeBodyPart htmlPart = new
 			 * MimeBodyPart();
 			 */
-			StringBuilder sb = new StringBuilder();
-			for (String s : artifactNames) {
-				sb.append(s);
-				sb.append("\t");
-			}
+			
 			// logger.info(sb.toString());
 			/*
 			 * htmlPart.setContent("<table><tr><td></td></tr></table>",
 			 * "text/html"); mp.addBodyPart(htmlPart);
 			 */
-			message.setText(sb.toString());
-			// message.setContent(mp);
-
-			Transport.send(message);
+			
+			// message.setContent(mp);			
 		} catch (MessagingException mex) {
 			mex.printStackTrace();
 		}
