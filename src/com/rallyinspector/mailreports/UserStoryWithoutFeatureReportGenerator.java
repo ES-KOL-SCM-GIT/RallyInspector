@@ -88,7 +88,6 @@ public class UserStoryWithoutFeatureReportGenerator {
 				sb.append("<tr><td>"); // <tr> creates a new row & <td> creates a new column on the same row.
 				sb.append(s);
 				sb.append("</td></tr>");
-				sb.append("\n");
 			}
 			sb.append("</table>");
 			
